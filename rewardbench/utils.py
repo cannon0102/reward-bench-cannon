@@ -31,10 +31,27 @@ EXTRA_PREF_SETS = "allenai/pref-test-sets"
 BON_CANDIDATES = "ai2-adapt-dev/HERM_BoN_candidates"
 EVAL_REPO = "ai2-adapt-dev/HERM-Results"  # data repo to upload results
 
+# Local Hub locations
+LOCAL_EXTRA_PREF_SETS = "/Users/cannonchen/llm_dataset/preference-test-sets/data"
+
 # get token from HF_TOKEN env variable, but if it doesn't exist pass none
 HF_TOKEN = os.getenv("HF_TOKEN", None)
 api = HfApi(token=HF_TOKEN)
 
+def results_dict_to_lists(results_dict):
+    results_list = []
+    samples_num = len(results_dict['results'])
+    for i in range(samples_num):
+        result = {}
+        result['pair_order'] = results_dict['results'][i]
+        result['scores_chosen'] = results_dict['scores_chosen'][i]
+        result['scores_rejected'] = results_dict['scores_rejected'][i]
+        result['text_chosen'] = results_dict['text_chosen'][i]
+        result['text_rejected'] = results_dict['text_rejected'][i]
+        result['prompt'] = results_dict['prompt'][i]
+        result_jsonstr = json.dumps(result, ensure_ascii=False)
+        results_list.append(result_jsonstr)
+    return results_list    
 
 def save_to_hub(
     results_dict: Union[Dict, List],
@@ -48,7 +65,8 @@ def save_to_hub(
     Utility for saving results in dict to the hub in programatic organization.
     """
     if "scores" in target_path:
-        scores_path = f"results/scores/{model_name}.json"
+        # scores_path = f"results/scores/{model_name}.json"
+        scores_path = f"results/scores/cannon_diff.json"
     else:
         scores_path = f"results/metrics/{model_name}.json"
 
@@ -68,8 +86,11 @@ def save_to_hub(
 
     with open(scores_path, "w") as f:
         if isinstance(results_dict, Dict):
-            dumped = json.dumps(results_dict, indent=4, sort_keys=True)  # nol removed , default=str
-            f.write(dumped)
+            # dumped = json.dumps(results_dict, indent=4, sort_keys=True)  # nol removed , default=str
+            # f.write(dumped)
+            result_list = results_dict_to_lists(results_dict)
+            for result in result_list:
+                f.write(result + '\n')
         # else, dump each row in list
         else:
             for record in results_dict:
@@ -117,26 +138,28 @@ def load_eval_dataset(
     if core_set:
         raw_dataset = load_dataset(CORE_EVAL_SET, split="filtered")
     else:
-        raw_dataset = load_dataset(EXTRA_PREF_SETS)
-        modified_datasets = []
+        # raw_dataset = load_dataset(EXTRA_PREF_SETS)
+        # modified_datasets = []
 
-        # Iterate over each subset in the DatasetDict
-        for subset_name, subdataset in raw_dataset.items():
-            # if subset column exists, move to subsubset (for pref sets)
-            if "subset" in subdataset.column_names:
-                subdataset = subdataset.rename_column("subset", "subsubset")
+        # # Iterate over each subset in the DatasetDict
+        # for subset_name, subdataset in raw_dataset.items():
+        #     # if subset column exists, move to subsubset (for pref sets)
+        #     if "subset" in subdataset.column_names:
+        #         subdataset = subdataset.rename_column("subset", "subsubset")
 
-            # Add a new column 'subset' to the dataset with the subset name
-            subdataset = subdataset.add_column("subset", [subset_name] * len(subdataset))
+        #     # Add a new column 'subset' to the dataset with the subset name
+        #     subdataset = subdataset.add_column("subset", [subset_name] * len(subdataset))
 
-            # Append the modified dataset to the list
-            # remove pku_safer and pku_better from the dict, no longer part of the benchmark
-            if subset_name not in ["pku_safer", "pku_better"]:
-                modified_datasets.append(subdataset)
+        #     # Append the modified dataset to the list
+        #     # remove pku_safer and pku_better from the dict, no longer part of the benchmark
+        #     if subset_name not in ["pku_safer", "pku_better"]:
+        #         modified_datasets.append(subdataset)
+        
+        # # Concatenate all the modified datasets into one dataset
+        # raw_dataset = concatenate_datasets(modified_datasets)
 
-        # Concatenate all the modified datasets into one dataset
-        raw_dataset = concatenate_datasets(modified_datasets)
-
+        raw_dataset = load_dataset('parquet', data_files={'train': LOCAL_EXTRA_PREF_SETS + '/*.parquet'})['train']
+        
     # Apply chat template
     if not custom_dialogue_formatting:
         usable_tokenizer = False

@@ -140,7 +140,7 @@ def main():
     BATCH_SIZE = args.batch_size
 
     model_kwargs = {
-        "load_in_8bit": True,
+        # "load_in_8bit": True,
         "device_map": "auto",
         "torch_dtype": torch.float16 if torch.cuda.is_available() else None,
     }
@@ -154,7 +154,7 @@ def main():
         ref_model = None
     else:
         model_kwargs_ref = {
-            "load_in_8bit": True,
+            # "load_in_8bit": True,
             "device_map": "auto",
             "torch_dtype": torch.float16 if torch.cuda.is_available() else None,
         }
@@ -251,16 +251,16 @@ def main():
     # Upload results to hub
     ############################
     sub_path = "eval-set/" if not args.pref_sets else "pref-sets/"
-    results_url = save_to_hub(
-        results_grouped,
-        args.model + save_modifier,
-        sub_path,
-        args.debug,
-        local_only=args.do_not_save,
-        save_metrics_for_beaker=True,
-    )
-    if not args.do_not_save:
-        logger.info(f"Uploaded reward model results to {results_url}")
+    # results_url = save_to_hub(
+    #     results_grouped,
+    #     args.model + save_modifier,
+    #     sub_path,
+    #     args.debug,
+    #     local_only=args.do_not_save,
+    #     save_metrics_for_beaker=True,
+    # )
+    # if not args.do_not_save:
+    #     logger.info(f"Uploaded reward model results to {results_url}")
 
     # upload chosen-rejected with scores
     # create new json with scores and upload
@@ -270,7 +270,7 @@ def main():
     scores_dict["chat_template"] = args.chat_template
     sub_path_scores = "eval-set-scores/" if not args.pref_sets else "pref-sets-scores/"
 
-    scores_url = save_to_hub(scores_dict, args.model + save_modifier, sub_path_scores, args.debug)
+    scores_url = save_to_hub(scores_dict, args.model + save_modifier, sub_path_scores, args.debug, local_only=True)
     logger.info(f"Uploading chosen-rejected text with scores to {scores_url}")
 
 
