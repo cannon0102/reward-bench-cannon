@@ -189,6 +189,7 @@ Please cite our work with the following:
       primaryClass={cs.LG}
 }
 ```
-
-# python scripts/run_dpo.py --model=/Users/cannonchen/llm_models/Qwen1.5-0.5B-Chat --ref_model=/Users/cannonchen/llm_models/Qwen1.5-0.5B --pref_sets --tokenize=/Users/cannonchen/llm_models/Qwen1.5-0.5B-Chat --debug=True --batch_size=1
+```shell
+python scripts/run_dpo.py --model=/Users/cannonchen/llm_models/Qwen1.5-0.5B-Chat --ref_model=/Users/cannonchen/llm_models/Qwen1.5-0.5B --pref_sets --tokenize=/Users/cannonchen/llm_models/Qwen1.5-0.5B-Chat --debug=True --batch_size=1
+```
 
